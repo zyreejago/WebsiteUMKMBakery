@@ -2,17 +2,20 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { supabase } from "@/lib/supabase"
+import { useAuth } from "@/lib/auth-context"
 import type { Product, ProductCategory } from "@/lib/data" // Keep the types
 
 export default function MenuPage() {
   const [searchQuery, setSearchQuery] = useState("")
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const { isAuthenticated } = useAuth()
+  const router = useRouter()
 
   const categories: ProductCategory[] = ["Kue Kering", "Kue Basah", "Kue Loyang"]
 
@@ -50,6 +53,14 @@ export default function MenuPage() {
           product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
           product.description.toLowerCase().includes(searchQuery.toLowerCase()),
       )
+  }
+
+  const handleOrderClick = (productId: number) => {
+    if (isAuthenticated) {
+      router.push(`/order?product=${productId}`)
+    } else {
+      router.push(`/login?returnUrl=${encodeURIComponent(`/order?product=${productId}`)}`)
+    }
   }
 
   return (
@@ -97,7 +108,7 @@ export default function MenuPage() {
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {filteredProducts(category).map((product) => (
-                    <ProductCard key={product.id} product={product} />
+                    <ProductCard key={product.id} product={product} onOrderClick={handleOrderClick} />
                   ))}
                 </div>
               )}
@@ -109,7 +120,7 @@ export default function MenuPage() {
   )
 }
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, onOrderClick }: { product: Product; onOrderClick: (id: number) => void }) {
   return (
     <Card className="overflow-hidden h-full flex flex-col">
       <div className="relative h-48">
@@ -121,8 +132,8 @@ function ProductCard({ product }: { product: Product }) {
           <span className="font-medium text-primary">Rp {product.price.toLocaleString()}</span>
         </div>
         <p className="text-muted-foreground text-sm mb-4 flex-grow">{product.description}</p>
-        <Button asChild className="w-full mt-auto">
-          <Link href={`/order?product=${product.id}`}>Pesan Sekarang</Link>
+        <Button className="w-full mt-auto" onClick={() => onOrderClick(product.id)}>
+          Pesan Sekarang
         </Button>
       </CardContent>
     </Card>

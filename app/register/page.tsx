@@ -2,9 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Cake, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -12,9 +12,14 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { createUser } from "@/lib/user-service"
+import { useAuth } from "@/lib/auth-context"
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get("returnUrl") || "/"
+  const { isAuthenticated, login } = useAuth()
+
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -26,6 +31,13 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      router.push(returnUrl)
+    }
+  }, [isAuthenticated, router, returnUrl])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -73,9 +85,15 @@ export default function RegisterPage() {
       })
 
       if (newUser) {
-        // Show success message and redirect to login
-        alert("Pendaftaran berhasil! Silakan login dengan akun baru Anda.")
-        router.push("/login")
+        // Auto login after successful registration
+        const success = await login(formData.email, formData.password, returnUrl)
+
+        if (!success) {
+          // If auto-login fails, redirect to login page
+          alert("Pendaftaran berhasil! Silakan login dengan akun baru Anda.")
+          router.push(`/login?returnUrl=${encodeURIComponent(returnUrl)}`)
+        }
+        // If login succeeds, the login function will handle the redirect
       } else {
         setError("Email sudah terdaftar atau terjadi kesalahan saat mendaftar")
       }
@@ -181,7 +199,7 @@ export default function RegisterPage() {
             </Button>
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Sudah punya akun?{" "}
-              <Link href="/login" className="text-primary hover:underline">
+              <Link href={`/login?returnUrl=${encodeURIComponent(returnUrl)}`} className="text-primary hover:underline">
                 Login
               </Link>
             </p>

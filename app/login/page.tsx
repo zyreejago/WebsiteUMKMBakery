@@ -2,9 +2,9 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Cake, Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
@@ -14,13 +14,28 @@ import { useAuth } from "@/lib/auth-context"
 
 export default function LoginPage() {
   const router = useRouter()
-  const { login } = useAuth()
+  const searchParams = useSearchParams()
+  const returnUrl = searchParams.get("returnUrl") || ""
+  const { login, isAuthenticated, isAdmin } = useAuth()
 
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (isAuthenticated) {
+      if (returnUrl) {
+        router.push(returnUrl)
+      } else if (isAdmin) {
+        router.push("/admin")
+      } else {
+        router.push("/")
+      }
+    }
+  }, [isAuthenticated, isAdmin, router, returnUrl])
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -35,21 +50,13 @@ export default function LoginPage() {
     setLoading(true)
 
     try {
-      const success = await login(email, password)
+      // Pass the returnUrl to the login function
+      const success = await login(email, password, returnUrl)
 
-      if (success) {
-        // Get the user role from localStorage
-        const userRole = localStorage.getItem("userRole")
-
-        // Redirect based on user role
-        if (userRole === "admin") {
-          router.push("/admin")
-        } else {
-          router.push("/")
-        }
-      } else {
+      if (!success) {
         setError("Email atau password salah")
       }
+      // The login function will handle the redirection
     } catch (error) {
       console.error("Login error:", error)
       setError("Terjadi kesalahan saat login")
@@ -119,7 +126,10 @@ export default function LoginPage() {
             </Button>
             <p className="mt-4 text-center text-sm text-muted-foreground">
               Belum punya akun?{" "}
-              <Link href="/register" className="text-primary hover:underline">
+              <Link
+                href={`/register?returnUrl=${encodeURIComponent(returnUrl)}`}
+                className="text-primary hover:underline"
+              >
                 Daftar
               </Link>
             </p>

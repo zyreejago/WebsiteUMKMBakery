@@ -3,21 +3,23 @@
 import type React from "react"
 
 import { useState, useEffect } from "react"
-import { useSearchParams } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import Image from "next/image"
 import Link from "next/link"
 import { format, addDays, isBefore } from "date-fns"
 import { id } from "date-fns/locale"
-import { CalendarIcon, Minus, Plus, Trash2 } from "lucide-react"
+import { CalendarIcon, Minus, Plus, Trash2, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { supabase } from "@/lib/supabase"
-import type { Product } from "@/lib/data" // Keep the type
+import type { Product, ProductCategory } from "@/lib/data" // Keep the type
 import { cn } from "@/lib/utils"
+import { useAuth } from "@/lib/auth-context"
 
 interface CartItem {
   product: Product
@@ -32,6 +34,8 @@ interface QrisSettings {
 
 export default function OrderPage() {
   const searchParams = useSearchParams()
+  const router = useRouter()
+  const { user, isAuthenticated } = useAuth()
   const productId = searchParams.get("product")
 
   const [cart, setCart] = useState<CartItem[]>([])
@@ -47,6 +51,18 @@ export default function OrderPage() {
     number: "1234567890",
   })
   const [loading, setLoading] = useState(true)
+  const [selectedCategory, setSelectedCategory] = useState<ProductCategory | null>(null)
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false)
+  const [categoryProducts, setCategoryProducts] = useState<Product[]>([])
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // Check if user is authenticated
+  useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      // Redirect to login page with a return URL
+      router.push(`/login?returnUrl=${encodeURIComponent("/order" + (productId ? `?product=${productId}` : ""))}`)
+    }
+  }, [isAuthenticated, loading, router, productId])
 
   // Fetch products and QRIS settings
   useEffect(() => {
@@ -66,7 +82,7 @@ export default function OrderPage() {
           price: item.price,
           description: item.description || "",
           image: item.image || "/placeholder.svg?height=300&width=300",
-          category: item.category as any,
+          category: item.category as ProductCategory,
           dailyLimit: item.daily_limit || 50,
         }))
         setProducts(formattedProducts)
@@ -89,32 +105,44 @@ export default function OrderPage() {
       setLoading(false)
     }
 
-    fetchData()
-  }, [])
+    if (isAuthenticated) {
+      fetchData()
+
+      // Set user's address if available
+      if (user?.address) {
+        setAddress(user.address)
+      }
+    }
+  }, [isAuthenticated, user])
 
   // Add product from URL param to cart
   useEffect(() => {
-    if (productId && products.length > 0) {
+    if (productId && products.length > 0 && isAuthenticated) {
       const product = products.find((p) => p.id === Number.parseInt(productId))
       if (product && !cart.some((item) => item.product.id === product.id)) {
         setCart([...cart, { product, quantity: 1 }])
       }
     }
-  }, [productId, products])
+  }, [productId, products, cart, isAuthenticated])
 
-  const addToCart = (category: string) => {
-    const randomProduct = products.find((p) => p.category === category)
-    if (randomProduct) {
-      const existingItem = cart.find((item) => item.product.id === randomProduct.id)
+  const openCategoryDialog = (category: ProductCategory) => {
+    setSelectedCategory(category)
+    const filteredProducts = products.filter((p) => p.category === category)
+    setCategoryProducts(filteredProducts)
+    setCategoryDialogOpen(true)
+  }
 
-      if (existingItem) {
-        setCart(
-          cart.map((item) => (item.product.id === randomProduct.id ? { ...item, quantity: item.quantity + 1 } : item)),
-        )
-      } else {
-        setCart([...cart, { product: randomProduct, quantity: 1 }])
-      }
+  const addToCart = (product: Product) => {
+    const existingItem = cart.find((item) => item.product.id === product.id)
+
+    if (existingItem) {
+      setCart(cart.map((item) => (item.product.id === product.id ? { ...item, quantity: item.quantity + 1 } : item)))
+    } else {
+      setCart([...cart, { product, quantity: 1 }])
     }
+
+    // Close the dialog after adding to cart
+    setCategoryDialogOpen(false)
   }
 
   const removeFromCart = (productId: number) => {
@@ -142,14 +170,14 @@ export default function OrderPage() {
   }
 
   const handleSubmitOrder = async () => {
-    if (!date || !address || !paymentProof) return
+    if (!date || !address || !paymentProof || !isAuthenticated || !user) return
 
     try {
       // 1. Insert the order
       const { data: orderData, error: orderError } = await supabase
         .from("orders")
         .insert({
-          user_id: 2, // Hardcoded for now, in a real app you'd get this from auth
+          user_id: user.id, // Use the authenticated user's ID
           total: calculateTotal(),
           status: "waiting_payment",
           delivery_date: format(date, "yyyy-MM-dd"),
@@ -189,6 +217,9 @@ export default function OrderPage() {
       setAddress("")
       setNotes("")
       setPaymentProof(null)
+
+      // Redirect to order detail page
+      router.push(`/order/${orderData.id}`)
     } catch (error) {
       console.error("Error submitting order:", error)
       alert("Terjadi kesalahan saat membuat pesanan. Silakan coba lagi.")
@@ -199,6 +230,22 @@ export default function OrderPage() {
   const disabledDays = (date: Date) => {
     const twoDaysFromNow = addDays(new Date(), 1)
     return isBefore(date, twoDaysFromNow)
+  }
+
+  // Filter products by search query
+  const filteredCategoryProducts = categoryProducts.filter(
+    (product) =>
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      product.description.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
+
+  // If not authenticated, show loading state until redirect happens
+  if (!isAuthenticated) {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <p>Mengalihkan ke halaman login...</p>
+      </div>
+    )
   }
 
   if (loading) {
@@ -232,12 +279,12 @@ export default function OrderPage() {
                     <Button
                       key={category}
                       variant="outline"
-                      onClick={() => addToCart(category)}
+                      onClick={() => openCategoryDialog(category as ProductCategory)}
                       className="h-auto py-4"
                     >
                       <div className="text-left">
                         <div className="font-medium">{category}</div>
-                        <div className="text-sm text-muted-foreground">Tambahkan ke keranjang</div>
+                        <div className="text-sm text-muted-foreground">Lihat daftar {category.toLowerCase()}</div>
                       </div>
                     </Button>
                   ))}
@@ -503,6 +550,52 @@ export default function OrderPage() {
           </Card>
         </div>
       </div>
+
+      {/* Category Products Dialog */}
+      <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Pilih {selectedCategory}</DialogTitle>
+          </DialogHeader>
+
+          <div className="relative mb-4">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder={`Cari ${selectedCategory?.toLowerCase()}...`}
+              className="w-full pl-8 pr-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+
+          {filteredCategoryProducts.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Tidak ada produk yang ditemukan.</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+              {filteredCategoryProducts.map((product) => (
+                <Card key={product.id} className="overflow-hidden">
+                  <div className="relative h-40">
+                    <Image src={product.image || "/placeholder.svg"} alt={product.name} fill className="object-cover" />
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-semibold">{product.name}</h3>
+                      <span className="font-medium text-primary">Rp {product.price.toLocaleString()}</span>
+                    </div>
+                    <p className="text-muted-foreground text-sm mb-4 line-clamp-2">{product.description}</p>
+                    <Button className="w-full" onClick={() => addToCart(product)}>
+                      Tambahkan ke Keranjang
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
