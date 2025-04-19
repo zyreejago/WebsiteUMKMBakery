@@ -126,7 +126,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
           <Button variant="outline" size="icon" className="mr-4" onClick={() => router.back()}>
             <ArrowLeft className="h-4 w-4" />
           </Button>
-          <h1 className="text-3xl font-bold">Detail Pesanan #{order.id}</h1>
+          <h1 className="text-3xl font-bold">Detail Pesanan #{order.id} </h1>
         </div>
         <div>{getStatusBadge(order.status)}</div>
       </div>
@@ -180,6 +180,38 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                   <p className="font-medium">{order.notes}</p>
                 </div>
               )}
+
+              <Separator />
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">Metode Pengambilan</p>
+                  <p className="font-medium">{order.delivery_method === "pickup" ? "Ambil di Tempat" : "Kirim"}</p>
+                </div>
+                {order.delivery_method === "delivery" && order.shipping_method && (
+                  <div>
+                    <p className="text-sm text-muted-foreground">Metode Pengiriman</p>
+                    <p className="font-medium">
+                      {(() => {
+                        switch (order.shipping_method) {
+                          case "gosend-instant-motor":
+                            return "Gosend Instant (Motor)"
+                          case "gosend-sameday-motor":
+                            return "Gosend Sameday (Motor)"
+                          case "gosend-instant-car":
+                            return "Gosend Instant (Mobil)"
+                          case "gosend-sameday-car":
+                            return "Gosend Sameday (Mobil)"
+                          case "paxel":
+                            return "Paxel"
+                          default:
+                            return order.shipping_method
+                        }
+                      })()}
+                    </p>
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
@@ -293,4 +325,3 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
     </AdminLayout>
   )
 }
-

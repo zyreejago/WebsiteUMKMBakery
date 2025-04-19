@@ -27,6 +27,8 @@ export interface Order {
   address: string
   notes: string | null
   created_at: string
+  delivery_method: "pickup" | "delivery"
+  shipping_method: string | null
   // Include related data when joined
   items?: OrderItem[]
   user?: {
@@ -49,6 +51,8 @@ export interface OrderInput {
   address: string
   notes?: string | null
   status?: OrderStatus
+  delivery_method: "pickup" | "delivery"
+  shipping_method?: string | null
 }
 
 /**
@@ -150,6 +154,8 @@ export async function createOrder(order: OrderInput): Promise<Order | null> {
         payment_proof: paymentProofUrl,
         address: order.address,
         notes: order.notes,
+        delivery_method: order.delivery_method,
+        shipping_method: order.shipping_method,
       })
       .select()
       .single()
@@ -255,4 +261,3 @@ export async function deleteOrder(id: number): Promise<boolean> {
     return false
   }
 }
-

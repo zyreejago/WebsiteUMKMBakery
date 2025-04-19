@@ -55,6 +55,8 @@ export default function OrderPage() {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false)
   const [categoryProducts, setCategoryProducts] = useState<Product[]>([])
   const [searchQuery, setSearchQuery] = useState("")
+  const [deliveryMethod, setDeliveryMethod] = useState<"pickup" | "delivery">("pickup")
+  const [shippingMethod, setShippingMethod] = useState<string>("")
 
   // Check if user is authenticated
   useEffect(() => {
@@ -169,8 +171,71 @@ export default function OrderPage() {
     }
   }
 
+  const getAvailableShippingMethods = () => {
+    // Check if cart has only dry cakes
+    const hasOnlyDryCakes = cart.every((item) => item.product.category === "Kue Kering")
+
+    // Check if cart has only dry cakes and layer cakes
+    const hasOnlyDryAndLayerCakes = cart.every(
+      (item) => item.product.category === "Kue Kering" || item.product.category === "Kue Loyang",
+    )
+
+    // Count items by category to check limits
+    const dryCount = cart.reduce((sum, item) => (item.product.category === "Kue Kering" ? sum + item.quantity : sum), 0)
+    const wetCount = cart.reduce((sum, item) => (item.product.category === "Kue Basah" ? sum + item.quantity : sum), 0)
+    const layerCount = cart.reduce(
+      (sum, item) => (item.product.category === "Kue Loyang" ? sum + item.quantity : sum),
+      0,
+    )
+
+    // Define shipping methods
+    const methods = [
+      {
+        id: "gosend-instant-motor",
+        name: "Gosend Instant (Motor)",
+        description: "Seluruh jenis dengan jarak kurang dari 50km",
+        restrictions: "12 Kue Kering, 250 Kue Basah, 4 Kue Loyang",
+        available: dryCount <= 12 && wetCount <= 250 && layerCount <= 4,
+      },
+      {
+        id: "gosend-sameday-motor",
+        name: "Gosend Sameday (Motor)",
+        description: "Kue Kering & Kue Loyang dengan jarak kurang dari 50km",
+        restrictions: "12 Kue Kering, 4 Kue Loyang",
+        available: hasOnlyDryAndLayerCakes && dryCount <= 12 && layerCount <= 4,
+      },
+      {
+        id: "gosend-instant-car",
+        name: "Gosend Instant (Mobil)",
+        description: "Seluruh jenis dengan jarak kurang dari 50km",
+        available: true,
+      },
+      {
+        id: "gosend-sameday-car",
+        name: "Gosend Sameday (Mobil)",
+        description: "Kue Kering & Kue Loyang dengan jarak kurang dari 50km",
+        available: hasOnlyDryAndLayerCakes,
+      },
+      {
+        id: "paxel",
+        name: "Paxel",
+        description: "Kue kering dengan jarak maksimal 250km",
+        available: hasOnlyDryCakes,
+      },
+    ]
+
+    return methods.filter((method) => method.available)
+  }
+
   const handleSubmitOrder = async () => {
-    if (!date || !address || !paymentProof || !isAuthenticated || !user) return
+    if (
+      !date ||
+      (deliveryMethod === "delivery" && (!address || !shippingMethod)) ||
+      !paymentProof ||
+      !isAuthenticated ||
+      !user
+    )
+      return
 
     try {
       // 1. Insert the order
@@ -182,7 +247,9 @@ export default function OrderPage() {
           status: "waiting_payment",
           delivery_date: format(date, "yyyy-MM-dd"),
           payment_proof: paymentProof, // In a real app, this would be a URL to Supabase Storage
-          address,
+          delivery_method: deliveryMethod,
+          shipping_method: deliveryMethod === "delivery" ? shippingMethod : null,
+          address: deliveryMethod === "delivery" ? address : null,
           notes,
         })
         .select()
@@ -334,6 +401,13 @@ export default function OrderPage() {
                           >
                             <Plus className="h-4 w-4" />
                           </Button>
+                          <span className="text-xs text-muted-foreground">
+                            {item.product.category === "Kue Kering"
+                              ? "pcs"
+                              : item.product.category === "Kue Basah"
+                                ? "pcs"
+                                : "loyang"}
+                          </span>
                         </div>
                         <div className="text-right min-w-[100px]">
                           <div className="font-medium">Rp {(item.product.price * item.quantity).toLocaleString()}</div>
@@ -397,17 +471,79 @@ export default function OrderPage() {
                     </p>
                   </div>
 
-                  <div className="grid gap-2">
-                    <label htmlFor="address" className="text-sm font-medium">
-                      Alamat Pengiriman
-                    </label>
-                    <Textarea
-                      id="address"
-                      placeholder="Masukkan alamat lengkap pengiriman"
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      className="min-h-[100px]"
-                    />
+                  <div className="grid gap-4">
+                    <div className="grid gap-2">
+                      <label className="text-sm font-medium">Metode Pengambilan</label>
+                      <div className="flex gap-4">
+                        <Button
+                          type="button"
+                          variant={deliveryMethod === "pickup" ? "default" : "outline"}
+                          onClick={() => setDeliveryMethod("pickup")}
+                          className="flex-1"
+                        >
+                          Ambil di Tempat
+                        </Button>
+                        <Button
+                          type="button"
+                          variant={deliveryMethod === "delivery" ? "default" : "outline"}
+                          onClick={() => setDeliveryMethod("delivery")}
+                          className="flex-1"
+                        >
+                          Kirim
+                        </Button>
+                      </div>
+                    </div>
+
+                    {deliveryMethod === "delivery" && (
+                      <>
+                        <div className="grid gap-2">
+                          <label htmlFor="address" className="text-sm font-medium">
+                            Alamat Pengiriman
+                          </label>
+                          <Textarea
+                            id="address"
+                            placeholder="Masukkan alamat lengkap pengiriman"
+                            value={address}
+                            onChange={(e) => setAddress(e.target.value)}
+                            className="min-h-[100px]"
+                          />
+                        </div>
+
+                        <div className="grid gap-2">
+                          <label htmlFor="shipping-method" className="text-sm font-medium">
+                            Metode Pengiriman
+                          </label>
+                          <div className="space-y-2">
+                            {getAvailableShippingMethods().map((method) => (
+                              <div key={method.id} className="flex items-start gap-2 border rounded-md p-3">
+                                <input
+                                  type="radio"
+                                  id={method.id}
+                                  name="shipping-method"
+                                  value={method.id}
+                                  checked={shippingMethod === method.id}
+                                  onChange={() => setShippingMethod(method.id)}
+                                  className="mt-1"
+                                />
+                                <label htmlFor={method.id} className="flex-1 cursor-pointer">
+                                  <div className="font-medium">{method.name}</div>
+                                  <div className="text-sm text-muted-foreground">{method.description}</div>
+                                  {method.restrictions && (
+                                    <div className="text-xs text-muted-foreground mt-1">
+                                      Maksimal: {method.restrictions}
+                                    </div>
+                                  )}
+                                </label>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-2">
+                            <strong>Catatan:</strong> Harga pengiriman tidak termasuk dalam total harga dan akan
+                            diinformasikan melalui WhatsApp.
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </div>
 
                   <div className="grid gap-2">
@@ -427,7 +563,10 @@ export default function OrderPage() {
                 <Button variant="outline" onClick={() => setStep(1)}>
                   Kembali
                 </Button>
-                <Button onClick={() => setStep(3)} disabled={!date || !address}>
+                <Button
+                  onClick={() => setStep(3)}
+                  disabled={!date || (deliveryMethod === "delivery" && (!address || !shippingMethod))}
+                >
                   Lanjutkan
                 </Button>
               </CardFooter>
@@ -541,6 +680,16 @@ export default function OrderPage() {
                           <span className="text-muted-foreground">Tanggal Pengiriman</span>
                           <span>{format(date, "dd MMMM yyyy", { locale: id })}</span>
                         </div>
+                        <div className="flex justify-between">
+                          <span className="text-muted-foreground">Metode Pengambilan</span>
+                          <span>{deliveryMethod === "pickup" ? "Ambil di Tempat" : "Kirim"}</span>
+                        </div>
+                        {deliveryMethod === "delivery" && shippingMethod && (
+                          <div className="flex justify-between">
+                            <span className="text-muted-foreground">Metode Pengiriman</span>
+                            <span>{getAvailableShippingMethods().find((m) => m.id === shippingMethod)?.name}</span>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}
@@ -599,4 +748,3 @@ export default function OrderPage() {
     </div>
   )
 }
-
