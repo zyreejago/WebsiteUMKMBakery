@@ -65,6 +65,7 @@ export async function getUserByEmail(email: string): Promise<User | null> {
   return (data as User) || null
 }
 
+
 /**
  * Creates a new user
  */
@@ -101,8 +102,9 @@ export async function createUser(user: UserInput): Promise<User | null> {
 /**
  * Updates an existing user
  */
+// Fungsi updateUser di user-service.ts
 export async function updateUser(id: number, user: Partial<UserInput>): Promise<User | null> {
-  // If email is being updated, check if it already exists
+  // Jika email diupdate, cek apakah sudah ada yang menggunakan email tersebut
   if (user.email) {
     const existingUser = await getUserByEmail(user.email)
     if (existingUser && existingUser.id !== id) {
@@ -120,6 +122,7 @@ export async function updateUser(id: number, user: Partial<UserInput>): Promise<
 
   return data as User
 }
+
 
 /**
  * Deletes a user
@@ -154,4 +157,5 @@ export async function authenticateUser(email: string, password: string): Promise
 
   return data as User
 }
+
 

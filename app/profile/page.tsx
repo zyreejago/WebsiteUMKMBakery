@@ -27,7 +27,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     // Redirect to login if not authenticated
-    if (!isAuthenticated && !loading) {
+    if (!isAuthenticated) {
       router.push("/login?returnUrl=/profile")
       return
     }
@@ -35,29 +35,50 @@ export default function ProfilePage() {
     async function fetchUserData() {
       if (!authUser) return
 
-      setLoading(true)
+      setLoading(true) // Set loading to true while fetching
 
       try {
-        // Get full user data
-        const userData = await getUserById(authUser.id)
+        // Ambil data pengguna dan pesanan secara paralel
+        const [userData, userOrders] = await Promise.all([
+          getUserById(authUser.id),
+          getOrdersByUserId(authUser.id),
+        ])
+
         if (userData) {
           setUser(userData)
         }
-
-        // Get user orders
-        const userOrders = await getOrdersByUserId(authUser.id)
-        setOrders(userOrders)
+        if (userOrders) {
+          setOrders(userOrders)
+        }
       } catch (error) {
         console.error("Error fetching user data:", error)
       } finally {
-        setLoading(false)
+        setLoading(false) // Set loading to false after fetching is done
       }
     }
 
+    // Only fetch data if authenticated and authUser exists
     if (isAuthenticated && authUser) {
       fetchUserData()
     }
-  }, [isAuthenticated, authUser, router, loading])
+  }, [isAuthenticated, authUser, router]) // Removed loading from dependencies to prevent unnecessary rerenders
+
+  // Handling loading and authentication state
+  if (loading) {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <p>Memuat data...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated || !user) {
+    return (
+      <div className="container mx-auto py-8 px-4 text-center">
+        <p>Anda perlu login terlebih dahulu.</p>
+      </div>
+    )
+  }
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -74,22 +95,6 @@ export default function ProfilePage() {
       default:
         return <Badge>{status}</Badge>
     }
-  }
-
-  if (!isAuthenticated) {
-    return (
-      <div className="container mx-auto py-8 px-4 text-center">
-        <p>Mengalihkan ke halaman login...</p>
-      </div>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="container mx-auto py-8 px-4 text-center">
-        <p>Memuat data...</p>
-      </div>
-    )
   }
 
   return (
@@ -245,4 +250,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-
