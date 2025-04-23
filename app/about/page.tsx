@@ -20,18 +20,15 @@ export default function AboutPage() {
         <div>
           <h2 className="text-3xl font-bold mb-4">Cerita Kami</h2>
           <p className="text-muted-foreground mb-4">
-            Bakery UMKM didirikan pada tahun 2015 oleh Ibu Siti, seorang pecinta kue dengan hasrat untuk berbagi resep
-            keluarga yang telah diwariskan selama beberapa generasi.
+          Dapur Madu adalah usaha kuliner rumahan yang telah berdiri sejak tahun 2012. Berawal dari dapur kecil penuh semangat, kami tumbuh dengan satu tujuan: menghadirkan masakan lezat dan hangat seperti buatan rumah sendiri.
+
           </p>
           <p className="text-muted-foreground mb-4">
-            Berawal dari dapur rumah yang kecil, Ibu Siti mulai menerima pesanan kue untuk acara-acara kecil di
-            lingkungan sekitar. Berkat kualitas dan cita rasa yang konsisten, pesanan terus bertambah hingga akhirnya
-            Bakery UMKM resmi didirikan.
-          </p>
+          Dapur Madu adalah usaha kuliner rumahan yang telah berdiri sejak tahun 2012. Berawal dari dapur kecil penuh semangat, kami tumbuh dengan satu tujuan: menghadirkan masakan lezat dan hangat seperti buatan rumah sendiri.</p>
+
           <p className="text-muted-foreground">
-            Saat ini, Bakery UMKM telah berkembang menjadi usaha kue homemade yang dipercaya oleh banyak pelanggan setia
-            di seluruh kota. Meski telah berkembang, kami tetap berpegang pada prinsip untuk menggunakan bahan-bahan
-            berkualitas dan resep tradisional yang autentik.
+          Dapur Madu adalah usaha kuliner rumahan yang telah berdiri sejak tahun 2012. Berawal dari dapur kecil penuh semangat, kami tumbuh dengan satu tujuan: menghadirkan masakan lezat dan hangat seperti buatan rumah sendiri.
+
           </p>
         </div>
         <div className="relative h-[400px] rounded-lg overflow-hidden">

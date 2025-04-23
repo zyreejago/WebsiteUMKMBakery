@@ -43,9 +43,10 @@ export default async function Home() {
           priority
         />
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center p-4">
-          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Kue Homemade Berkualitas</h1>
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Rasa Rumahan, Cita Rasa Istimewa
+          </h1>
           <p className="text-xl text-white mb-8 max-w-2xl">
-            Dibuat dengan bahan-bahan pilihan dan resep tradisional untuk memberikan cita rasa terbaik
+          Kami percaya, makanan terbaik adalah yang dibuat dengan hati, karena rasa enak dimulai dari niat baik.
           </p>
           <div className="flex flex-col sm:flex-row gap-4">
             <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
@@ -77,9 +78,7 @@ export default async function Home() {
             <div className="md:w-1/2">
               <h2 className="text-3xl font-bold mb-4">Tentang Kami</h2>
               <p className="text-muted-foreground mb-4">
-                Sejak 2015, kami telah menyajikan kue-kue homemade berkualitas tinggi dengan resep turun-temurun. Setiap
-                kue dibuat dengan cinta dan perhatian khusus terhadap detail untuk memastikan kualitas terbaik.
-              </p>
+              Dapur Madu adalah usaha kuliner rumahan yang telah berdiri sejak tahun 2012. Berawal dari dapur kecil penuh semangat, kami tumbuh dengan satu tujuan: menghadirkan masakan lezat dan hangat seperti buatan rumah sendiri.</p>
               <p className="text-muted-foreground mb-6">
                 Kami menggunakan bahan-bahan segar dan berkualitas tinggi untuk memastikan setiap gigitan memberikan
                 pengalaman yang tak terlupakan. Semua produk kami dibuat fresh setiap hari berdasarkan pesanan.

@@ -53,7 +53,7 @@ export async function updateQrisSettings(settings: QrisSettingsInput): Promise<Q
 
       // Delete old image if it exists
       if (settings.currentImageUrl) {
-        await deleteFile(settings.currentImageUrl, "bakery")
+        await deleteFile(settings.currentImageUrl)
       }
     }
 

@@ -112,7 +112,7 @@ export default function AdminSettingsPage() {
         <TabsList className="mb-6">
           <TabsTrigger value="payment">Pembayaran</TabsTrigger>
           <TabsTrigger value="account">Akun</TabsTrigger>
-          <TabsTrigger value="store">Toko</TabsTrigger>
+          {/* <TabsTrigger value="store">Toko</TabsTrigger> */}
         </TabsList>
 
         <TabsContent value="payment">
@@ -212,7 +212,7 @@ export default function AdminSettingsPage() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="store">
+        {/* <TabsContent value="store">
           <Card>
             <CardHeader>
               <CardTitle>Pengaturan Toko</CardTitle>
@@ -243,7 +243,7 @@ export default function AdminSettingsPage() {
               <Button>Simpan Perubahan</Button>
             </CardFooter>
           </Card>
-        </TabsContent>
+        </TabsContent> */}
       </Tabs>
     </AdminLayout>
   )

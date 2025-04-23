@@ -307,7 +307,7 @@ export default function OrderDetailPage({ params }: OrderDetailPageProps) {
                 Jika Anda memiliki pertanyaan atau masalah dengan pesanan ini, silakan hubungi kami.
               </p>
               <Button className="w-full" asChild>
-                <Link href="mailto:info@bakeryumkm.com">Hubungi Kami</Link>
+                <Link href="">Hubungi Kami</Link>
               </Button>
             </CardContent>
             <CardFooter>

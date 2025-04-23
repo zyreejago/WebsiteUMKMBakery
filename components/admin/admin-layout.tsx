@@ -61,7 +61,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="p-4 border-b">
           <Link href="/admin" className="flex items-center gap-2 font-bold text-xl">
             <Cake className="h-6 w-6" />
-            <span>Bakery Admin</span>
+            <span>Dapur Madu</span>
           </Link>
         </div>
         <nav className="flex-1 p-4 space-y-1">
@@ -112,7 +112,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           <div className="p-4 border-b">
             <Link href="/admin" className="flex items-center gap-2 font-bold text-xl" onClick={() => setIsOpen(false)}>
               <Cake className="h-6 w-6" />
-              <span>Bakery Admin</span>
+              <span>Dapur Madu</span>
             </Link>
           </div>
           <nav className="flex-1 p-4 space-y-1">

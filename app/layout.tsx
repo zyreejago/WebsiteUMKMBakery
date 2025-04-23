@@ -10,7 +10,7 @@ import Footer from "@/components/layout/footer"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Bakery UMKM",
+  title: "Dapur Madu",
   description: "Kue homemade berkualitas dengan resep tradisional",
     generator: 'v0.dev'
 }

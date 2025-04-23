@@ -9,7 +9,7 @@ export default function Footer() {
           <div className="space-y-4">
             <div className="flex items-center gap-2">
               <Cake className="h-6 w-6" />
-              <span className="font-bold text-lg">Bakery UMKM</span>
+              <span className="font-bold text-lg">Dapur Madu</span>
             </div>
             <p className="text-muted-foreground text-sm">
               Menyediakan kue homemade berkualitas dengan resep tradisional sejak 2015.
@@ -19,14 +19,14 @@ export default function Footer() {
                 <Instagram className="h-5 w-5" />
                 <span className="sr-only">Instagram</span>
               </Link>
-              <Link href="#" className="text-muted-foreground hover:text-primary">
+              {/* <Link href="#" className="text-muted-foreground hover:text-primary">
                 <Facebook className="h-5 w-5" />
                 <span className="sr-only">Facebook</span>
               </Link>
               <Link href="mailto:info@bakeryumkm.com" className="text-muted-foreground hover:text-primary">
                 <Mail className="h-5 w-5" />
                 <span className="sr-only">Email</span>
-              </Link>
+              </Link> */}
             </div>
           </div>
 
@@ -82,23 +82,23 @@ export default function Footer() {
             <ul className="space-y-2">
               <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Phone className="h-4 w-4" />
-                <span>+62 812-3456-7890</span>
+                <span>+62 811-1799-189</span>
               </li>
-              <li className="flex items-center gap-2 text-muted-foreground text-sm">
+              {/* <li className="flex items-center gap-2 text-muted-foreground text-sm">
                 <Mail className="h-4 w-4" />
                 <span>info@bakeryumkm.com</span>
-              </li>
+              </li> */}
               <li className="text-muted-foreground text-sm mt-2">
-                Jl. Kue Lezat No. 123
+              Jl, Jambu VIII
                 <br />
-                Kota Rasa, Indonesia
+                No.30, Depok I
               </li>
             </ul>
           </div>
         </div>
 
         <div className="border-t mt-8 pt-8 text-center text-muted-foreground text-sm">
-          <p>&copy; {new Date().getFullYear()} Bakery UMKM. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Dapur Madu. All rights reserved.</p>
         </div>
       </div>
     </footer>

@@ -41,7 +41,11 @@ export async function getProducts(): Promise<Product[]> {
  * Fetches a product by ID
  */
 export async function getProductById(id: number): Promise<Product | null> {
-  const { data, error } = await supabase.from("products").select("*").eq("id", id).single()
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("id", id)
+    .single()
 
   if (error) {
     console.error(`Error fetching product with ID ${id}:`, error)
@@ -56,21 +60,20 @@ export async function getProductById(id: number): Promise<Product | null> {
  */
 export async function createProduct(product: ProductInput): Promise<Product | null> {
   try {
-    // Upload image if provided
-    let imageUrl = null
+    let imageUrl: string | null = null
     if (product.image) {
-      imageUrl = await uploadFile(product.image, "bakery", "products")
+      // Upload ke folder "products"
+      imageUrl = await uploadFile(product.image, "products")
     }
 
-    // Insert product into database
     const { data, error } = await supabase
       .from("products")
       .insert({
-        name: product.name,
-        price: product.price,
+        name:        product.name,
+        price:       product.price,
         description: product.description,
-        image: imageUrl,
-        category: product.category,
+        image:       imageUrl,
+        category:    product.category,
         daily_limit: product.daily_limit,
       })
       .select()
@@ -82,8 +85,8 @@ export async function createProduct(product: ProductInput): Promise<Product | nu
     }
 
     return data as Product
-  } catch (error) {
-    console.error("Error in createProduct:", error)
+  } catch (err: any) {
+    console.error("Error in createProduct:", err.message)
     return null
   }
 }
@@ -91,30 +94,34 @@ export async function createProduct(product: ProductInput): Promise<Product | nu
 /**
  * Updates an existing product
  */
-export async function updateProduct(id: number, product: ProductInput): Promise<Product | null> {
+export async function updateProduct(
+  id: number,
+  product: ProductInput
+): Promise<Product | null> {
   try {
-    // Handle image upload/replacement
-    let imageUrl = product.currentImageUrl
+    // Tentukan URL gambar final
+    let imageUrl = product.currentImageUrl ?? null
 
-    // If a new image is provided, upload it and delete the old one
     if (product.image) {
-      imageUrl = await uploadFile(product.image, "bakery", "products")
+      // Upload file baru ke "products"
+      const newUrl = await uploadFile(product.image, "products")
+      if (!newUrl) throw new Error("Failed to upload product image")
+      imageUrl = newUrl
 
-      // Delete old image if it exists
+      // Hapus gambar lama
       if (product.currentImageUrl) {
-        await deleteFile(product.currentImageUrl, "bakery")
+        await deleteFile(product.currentImageUrl)
       }
     }
 
-    // Update product in database
     const { data, error } = await supabase
       .from("products")
       .update({
-        name: product.name,
-        price: product.price,
+        name:        product.name,
+        price:       product.price,
         description: product.description,
-        image: imageUrl,
-        category: product.category,
+        image:       imageUrl,
+        category:    product.category,
         daily_limit: product.daily_limit,
       })
       .eq("id", id)
@@ -127,8 +134,8 @@ export async function updateProduct(id: number, product: ProductInput): Promise<
     }
 
     return data as Product
-  } catch (error) {
-    console.error("Error in updateProduct:", error)
+  } catch (err: any) {
+    console.error("Error in updateProduct:", err.message)
     return null
   }
 }
@@ -138,25 +145,25 @@ export async function updateProduct(id: number, product: ProductInput): Promise<
  */
 export async function deleteProduct(id: number): Promise<boolean> {
   try {
-    // Get the product to delete its image
     const product = await getProductById(id)
 
-    // Delete the product from the database
-    const { error } = await supabase.from("products").delete().eq("id", id)
+    const { error } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", id)
 
     if (error) {
       console.error(`Error deleting product with ID ${id}:`, error)
       return false
     }
 
-    // Delete the product image if it exists
-    if (product && product.image) {
-      await deleteFile(product.image, "bakery")
+    if (product?.image) {
+      await deleteFile(product.image)
     }
 
     return true
-  } catch (error) {
-    console.error("Error in deleteProduct:", error)
+  } catch (err: any) {
+    console.error("Error in deleteProduct:", err.message)
     return false
   }
 }
@@ -164,8 +171,14 @@ export async function deleteProduct(id: number): Promise<boolean> {
 /**
  * Fetches products by category
  */
-export async function getProductsByCategory(category: ProductCategory): Promise<Product[]> {
-  const { data, error } = await supabase.from("products").select("*").eq("category", category).order("name")
+export async function getProductsByCategory(
+  category: ProductCategory
+): Promise<Product[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("category", category)
+    .order("name")
 
   if (error) {
     console.error(`Error fetching products with category ${category}:`, error)
@@ -192,4 +205,3 @@ export async function searchProducts(query: string): Promise<Product[]> {
 
   return data as Product[]
 }
-

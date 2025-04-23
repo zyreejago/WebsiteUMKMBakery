@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image";
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { Button } from "@/components/ui/button"
@@ -42,10 +43,17 @@ export default function Header() {
             </SheetTrigger>
             <SheetContent side="left" className="w-[240px] sm:w-[300px]">
               <div className="flex flex-col gap-4 py-4">
-                <Link href="/" className="flex items-center gap-2 px-2" onClick={() => setIsOpen(false)}>
-                  <Cake className="h-5 w-5" />
-                  <span className="font-bold">Bakery UMKM</span>
-                </Link>
+              <Link href="/" className="flex items-center gap-2">
+  <Image
+    src="/assets/img/LogoDapurMadu.PNG"
+    alt="Logo Dapur Madu"
+    width={40}
+    height={40}
+    className="object-contain"
+  />
+  <span className="font-bold hidden sm:inline-block">Bakery UMKM</span>
+</Link>
+
                 <div className="flex flex-col space-y-3">
                   {navItems.map((item) => (
                     <Link
@@ -72,9 +80,17 @@ export default function Header() {
           </Sheet>
 
           <Link href="/" className="flex items-center gap-2">
-            <Cake className="h-6 w-6" />
-            <span className="font-bold hidden sm:inline-block">Bakery UMKM</span>
-          </Link>
+  <Image
+    src="/assets/img/LogoDapurMadu.PNG"
+    alt="Logo Dapur Madu"
+    width={40}
+    height={40}
+    className="object-contain rounded-full shadow-lg"
+  />
+  <span className="font-bold hidden sm:inline-block">Dapur Madu</span>
+</Link>
+
+
         </div>
 
         <NavigationMenu className="hidden lg:flex">

@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Image from "next/image"
@@ -16,6 +15,36 @@ import type { ProductCategory } from "@/lib/data"
 
 interface ProductFormProps {
   productId?: number
+}
+
+// Fungsi untuk mendeteksi file HEIC
+const isHeicFile = (file: File): boolean => {
+  return file.name.toLowerCase().endsWith('.heic') || 
+         file.name.toLowerCase().endsWith('.heif') || 
+         file.type === 'image/heic' || 
+         file.type === 'image/heif'
+}
+
+// Fungsi untuk mengkonversi HEIC ke JPEG
+const convertHeicToJpeg = async (file: File): Promise<File> => {
+  try {
+    // Dynamically import heic2any hanya ketika diperlukan
+    const heic2any = (await import('heic2any')).default
+    const result = await heic2any({
+      blob: file,
+      toType: 'image/jpeg',
+      quality: 0.8
+    }) as Blob
+
+    // Buat File baru dari Blob hasil konversi
+    return new File([result], file.name.replace(/\.[^/.]+$/, '.jpg'), {
+      type: 'image/jpeg',
+      lastModified: new Date().getTime()
+    })
+  } catch (error) {
+    console.error('Konversi HEIC gagal:', error)
+    throw new Error('Gagal mengkonversi gambar HEIC')
+  }
 }
 
 export default function ProductForm({ productId }: ProductFormProps) {
@@ -73,20 +102,35 @@ export default function ProductForm({ productId }: ProductFormProps) {
     }))
   }
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (file) {
+    if (!file) return
+
+    try {
+      setLoading(true)
+      let processedFile = file
+      
+      // Konversi HEIC ke JPEG jika perlu
+      if (isHeicFile(file)) {
+        processedFile = await convertHeicToJpeg(file)
+      }
+
       setFormData((prev) => ({
         ...prev,
-        image: file,
+        image: processedFile,
       }))
 
-      // Create a preview
+      // Buat preview gambar
       const reader = new FileReader()
       reader.onloadend = () => {
         setImagePreview(reader.result as string)
       }
-      reader.readAsDataURL(file)
+      reader.readAsDataURL(processedFile)
+    } catch (error) {
+      console.error("Error processing image:", error)
+      alert("Gagal memproses gambar. Pastikan format gambar valid.")
+    } finally {
+      setLoading(false)
     }
   }
 
@@ -188,19 +232,28 @@ export default function ProductForm({ productId }: ProductFormProps) {
             <Label htmlFor="image">Gambar Produk</Label>
             {imagePreview && (
               <div className="relative w-full h-48 mb-2">
-                <Image src={imagePreview || "/placeholder.svg"} alt="Preview" fill className="object-contain" />
+                <Image 
+                  src={imagePreview || "/placeholder.svg"} 
+                  alt="Preview" 
+                  fill 
+                  className="object-contain"
+                  unoptimized // Untuk menangani blob URL dengan benar
+                />
               </div>
             )}
             <Input
               id="image"
               name="image"
               type="file"
-              accept="image/*"
+              accept="image/*,.heic,.heif"
               onChange={handleImageChange}
               className="cursor-pointer"
+              disabled={loading}
             />
             <p className="text-sm text-muted-foreground">
               {isEditing ? "Unggah gambar baru untuk mengganti gambar saat ini" : "Unggah gambar produk"}
+              <br />
+              Format HEIC/HEIF akan otomatis dikonversi ke JPG
             </p>
           </div>
         </CardContent>
@@ -216,4 +269,3 @@ export default function ProductForm({ productId }: ProductFormProps) {
     </Card>
   )
 }
-
